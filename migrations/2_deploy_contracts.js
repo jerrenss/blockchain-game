@@ -1,5 +1,5 @@
-const MemoryToken = artifacts.require("MemoryToken");
+const ElephantToken = artifacts.require("ElephantToken");
 
 module.exports = function(deployer) {
-  // Code goes here...
+  deployer.deploy(ElephantToken);
 };
