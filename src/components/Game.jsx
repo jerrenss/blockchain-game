@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Grid, Text } from "@chakra-ui/react";
-import GameCard from "./GameCard";
 import { useToast } from "@chakra-ui/react";
+import Web3 from 'web3'
+import GameCard from "./GameCard";
+import ElephantToken from '../abis/ElephantToken.json'
 
 const templateCardData = [
   {
@@ -87,7 +89,39 @@ const Game = () => {
   const [prevCard, setPrevCard] = useState({});
   const [turn, setTurn] = useState(0);
   const [count, setCount] = useState(0);
+  const [account, setAccount] = useState('');
+  const [contract, setContract] = useState({});
+  const [tokenURIs, setTokenURIs] = useState([]);
   const toast = useToast();
+
+  useEffect(() => {
+    loadBlockchainData()
+  }, []);
+  
+  const loadBlockchainData = async () => {
+    const web3 = new Web3(window.web3.currentProvider)
+    const accounts = await web3.eth.requestAccounts()
+    setAccount(accounts[0]);
+
+    // Load smart contract
+    const networkId = await web3.eth.net.getId()
+    const networkData = ElephantToken.networks[networkId]
+    if(networkData) {
+        const abi = ElephantToken.abi
+        const address = networkData.address
+        const contract = new web3.eth.Contract(abi, address)
+        setContract(contract)
+        const balanceOf = await contract.methods.balanceOf(accounts[0]).call()
+        for (let i = 0; i < balanceOf.toNumber(); i++) {
+            const id = await contract.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+            const tokenURI = await contract.methods.tokenURI(id).call()
+            setTokenURIs([...tokenURIs, tokenURI])
+        }
+    } else {
+        alert('Smart contract not deployed to detected network.')
+    }
+  }
+
 
   const renderGameCards = () => {
     return (
@@ -114,7 +148,7 @@ const Game = () => {
   };
 
   // Game logic handler
-  const onClickCard = (idx, id) => {
+  const onClickCard = async (idx, id) => {
     flipCard(idx);
 
     if (turn === 0) {
@@ -122,7 +156,7 @@ const Game = () => {
       setTurn(turn + 1);
     } else {
       if (id === prevCard.id) {
-        if (count + 1 === 8) {
+        if (count + 1 === 2) {
           toast({
             title: "Congratulations!",
             status: "success",
@@ -130,6 +164,15 @@ const Game = () => {
             duration: 2000,
             isClosable: true,
           });
+          const totalSupply = await contract.methods.totalSupply().call()
+          const newTokenURI = `https://avatars.dicebear.com/api/big-ears/elephant-${totalSupply.toNumber() + 1}.svg`
+          contract.methods.mint(
+            account, newTokenURI
+          )
+          .send({ from: account })
+          .on('transactionHash', (hash) => {
+              setTokenURIs([...tokenURIs, newTokenURI])
+          })
         }
         setCount(count + 1);
         setTurn(0);
@@ -160,6 +203,10 @@ const Game = () => {
         Find all matching pairs to collect uniquely minted NFTs!
       </Text>
       {renderGameCards()}
+      <Text mt="24px" mb="24px" fontSize="2xl" fontWeight={200}>
+        Currently owned Elephant NFTs
+      </Text>
+      {tokenURIs.length > 0 ? <Text>Have</Text> : <Text>None</Text>}
     </Container>
   );
 };

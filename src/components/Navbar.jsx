@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Flex, HStack, Image, Text } from "@chakra-ui/react";
+import Web3 from 'web3'
 
 const Navbar = () => {
+  const [account, setAccount] = useState('')
+
+  useEffect(() => {
+    getAccount()
+  }, []);
+
+  const getAccount = async () => {
+    const web3 = new Web3(window.web3.currentProvider)
+    const accounts = await web3.eth.requestAccounts()
+    setAccount(accounts[0]);
+  }
+
   return (
     <>
       <Box
@@ -27,7 +40,7 @@ const Navbar = () => {
             </Box>
             <HStack as={"nav"} spacing={4}>
               <Text color="#FFFFFF" fontWeight={600}>
-                Wallet
+                {account}
               </Text>
             </HStack>
           </HStack>
