@@ -35,7 +35,7 @@ const Navbar = () => {
             <Box display="flex" alignItems="center">
               <Image height="32px" src="logo-64.png" alt="Logo" />
               <Text color="#FFFFFF" ml="8px" fontWeight={600}>
-                Elephant
+                Web3 Elephant
               </Text>
             </Box>
             <HStack as={"nav"} spacing={4}>

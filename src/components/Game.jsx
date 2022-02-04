@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Container, Grid, Text } from "@chakra-ui/react";
+import { Container, Grid, GridItem, Text } from "@chakra-ui/react";
 import { useToast } from "@chakra-ui/react";
-import Web3 from 'web3'
+import Web3 from "web3";
 import GameCard from "./GameCard";
-import ElephantToken from '../abis/ElephantToken.json'
+import ElephantToken from "../abis/ElephantToken.json";
 
 const templateCardData = [
   {
@@ -89,39 +89,64 @@ const Game = () => {
   const [prevCard, setPrevCard] = useState({});
   const [turn, setTurn] = useState(0);
   const [count, setCount] = useState(0);
-  const [account, setAccount] = useState('');
+  const [account, setAccount] = useState("");
   const [contract, setContract] = useState({});
   const [tokenURIs, setTokenURIs] = useState([]);
   const toast = useToast();
 
   useEffect(() => {
-    loadBlockchainData()
+    loadBlockchainData();
   }, []);
-  
+
   const loadBlockchainData = async () => {
-    const web3 = new Web3(window.web3.currentProvider)
-    const accounts = await web3.eth.requestAccounts()
+    const web3 = new Web3(window.web3.currentProvider);
+    const accounts = await web3.eth.requestAccounts();
     setAccount(accounts[0]);
 
     // Load smart contract
-    const networkId = await web3.eth.net.getId()
-    const networkData = ElephantToken.networks[networkId]
-    if(networkData) {
-        const abi = ElephantToken.abi
-        const address = networkData.address
-        const contract = new web3.eth.Contract(abi, address)
-        setContract(contract)
-        const balanceOf = await contract.methods.balanceOf(accounts[0]).call()
-        for (let i = 0; i < balanceOf.toNumber(); i++) {
-            const id = await contract.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-            const tokenURI = await contract.methods.tokenURI(id).call()
-            setTokenURIs([...tokenURIs, tokenURI])
-        }
+    const networkId = await web3.eth.net.getId();
+    const networkData = ElephantToken.networks[networkId];
+    if (networkData) {
+      const abi = ElephantToken.abi;
+      const address = networkData.address;
+      const contract = new web3.eth.Contract(abi, address);
+      setContract(contract);
+      const balanceOf = await contract.methods.balanceOf(accounts[0]).call();
+      const arrURIs = [];
+      for (let i = 0; i < balanceOf.toNumber(); i++) {
+        const id = await contract.methods
+          .tokenOfOwnerByIndex(accounts[0], i)
+          .call();
+        const tokenURI = await contract.methods.tokenURI(id).call();
+        arrURIs.push(tokenURI);
+      }
+      setTokenURIs([...tokenURIs, ...arrURIs]);
     } else {
-        alert('Smart contract not deployed to detected network.')
+      alert("Smart contract not deployed to detected network.");
     }
-  }
+  };
 
+  const renderOwnedNFTs = () => {
+    return (
+      <Grid templateColumns="repeat(4, 1fr)" gap={3}>
+        {tokenURIs.map((item, index) => {
+          return (
+            <GridItem
+              key={index}
+              w="100%"
+              h="0"
+              pt="100%"
+              bgImage={item}
+              backgroundRepeat="no-repeat"
+              backgroundPosition="center"
+              backgroundSize="contain"
+              borderRadius="8px"
+            />
+          );
+        })}
+      </Grid>
+    );
+  };
 
   const renderGameCards = () => {
     return (
@@ -156,23 +181,27 @@ const Game = () => {
       setTurn(turn + 1);
     } else {
       if (id === prevCard.id) {
-        if (count + 1 === 2) {
+        if (count + 1 === 8) {
           toast({
             title: "Congratulations!",
             status: "success",
             position: "top",
-            duration: 2000,
+            duration: 4000,
             isClosable: true,
           });
-          const totalSupply = await contract.methods.totalSupply().call()
-          const newTokenURI = `https://avatars.dicebear.com/api/big-ears/elephant-${totalSupply.toNumber() + 1}.svg`
-          contract.methods.mint(
-            account, newTokenURI
-          )
-          .send({ from: account })
-          .on('transactionHash', (hash) => {
-              setTokenURIs([...tokenURIs, newTokenURI])
-          })
+          const totalSupply = await contract.methods.totalSupply().call();
+          const newTokenURI = `https://avatars.dicebear.com/api/big-ears/elephant-${
+            totalSupply.toNumber() + 1
+          }.svg`;
+          contract.methods
+            .mint(account, newTokenURI)
+            .send({ from: account })
+            .on("transactionHash", (hash) => {
+              setTokenURIs([...tokenURIs, newTokenURI]);
+              setTimeout(function () {
+                window.location.reload();
+              }, 1000);
+            });
         }
         setCount(count + 1);
         setTurn(0);
@@ -206,7 +235,11 @@ const Game = () => {
       <Text mt="24px" mb="24px" fontSize="2xl" fontWeight={200}>
         Currently owned Elephant NFTs
       </Text>
-      {tokenURIs.length > 0 ? <Text>Have</Text> : <Text>None</Text>}
+      {tokenURIs.length > 0 ? (
+        renderOwnedNFTs()
+      ) : (
+        <Text fontWeight={600}>None</Text>
+      )}
     </Container>
   );
 };
