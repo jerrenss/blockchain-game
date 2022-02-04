@@ -1,13 +1,11 @@
-import * as React from 'react'
+import React from 'react'
+import { ChakraProvider } from '@chakra-ui/react'
+import Home from './Home'
 
-import { ChakraProvider, Text } from '@chakra-ui/react'
-import Navbar from './Navbar'
-
-function App() {
+const App = () => {
   return (
     <ChakraProvider>
-      <Navbar />
-      <Text>Hello</Text>
+      <Home />
     </ChakraProvider>
   )
 }
