@@ -1,7 +1,7 @@
 {
   "name": "blockchain-game",
   "version": "0.1.0",
-  "description": "Blockchain memory game",
+  "description": "Elephant, the blockchain memory game",
   "author": "gregory@dappuniversity.com",
   "dependencies": {
     "@openzeppelin/contracts": "4.4.2",

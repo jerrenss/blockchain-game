@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Web3 from 'web3'
 import './App.css';
-import MemoryToken from '../abis/MemoryToken.json'
+// import MemoryToken from '../abis/MemoryToken.json'
 import brain from '../brain.png'
 
 class App extends Component {
@@ -25,7 +25,7 @@ class App extends Component {
             rel="noopener noreferrer"
           >
           <img src={brain} width="30" height="30" className="d-inline-block align-top" alt="" />
-          &nbsp; Memory Tokens
+          &nbsp; Elephant
           </a>
           <ul className="navbar-nav px-3">
             <li className="nav-item text-nowrap d-none d-sm-none d-sm-block">
